@@ -69,8 +69,12 @@ const readline = require('readline');
       // yt-dlpで直接MP3としてダウンロード
       // 時間指定用のオプションを構築
       const timeOptions = [];
-      if (startTime) timeOptions.push(`--download-sections *${startTime}-${endTime || ''}`);
-      if (startTime) timeOptions.push('--force-keyframes-at-cuts');
+      if (startTime || endTime) {
+        const start = startTime || '00:00:00';
+        const end = endTime || '';
+        timeOptions.push(`--download-sections *${start}-${end}`);
+        timeOptions.push('--force-keyframes-at-cuts');
+      }
       
       await new Promise((resolve, reject) => {
         exec(`yt-dlp -x --audio-format mp3 ${timeOptions.join(' ')} -o "${outputFile}" ${videoUrl}`, (error, stdout, stderr) => {
