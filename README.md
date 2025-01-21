@@ -5,8 +5,31 @@ YouTubeの動画から音声をMP3形式でダウンロードするNode.jsスク
 ## 必要な環境
 
 - Node.js (v16以上)
-- yt-dlp (自動でインストールされます)
+- yt-dlp
 - ffmpeg
+
+### yt-dlpのインストール方法
+
+#### Windows
+1. 手動ダウンロード方法:
+   - [yt-dlpの公式リリースページ](https://github.com/yt-dlp/yt-dlp/releases/latest)からyt-dlp.exeをダウンロード
+   - ダウンロードしたyt-dlp.exeをプロジェクトのルートディレクトリに配置
+
+2. curlコマンドを使用する方法:
+```bash
+curl -L -o yt-dlp.exe https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe
+```
+
+#### macOS (Homebrewを使用)
+```bash
+brew install yt-dlp
+```
+
+#### Linux
+```bash
+sudo apt update
+sudo apt install yt-dlp
+```
 
 ### ffmpegのインストール方法
 
