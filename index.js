@@ -45,8 +45,9 @@ const readline = require('readline');
     
     try {
       // 動画情報を取得
+      const ytDlpCommand = process.platform === 'win32' ? '.\\yt-dlp.exe' : 'yt-dlp';
       const info = await new Promise((resolve, reject) => {
-        exec(`yt-dlp ${videoUrl} --dump-json`, (error, stdout, stderr) => {
+        exec(`${ytDlpCommand} ${videoUrl} --dump-json`, (error, stdout, stderr) => {
           if (error) {
             reject(new Error(stderr));
           } else {
@@ -60,7 +61,12 @@ const readline = require('readline');
       }
 
       // 特殊文字を除去し、ファイル名を簡潔にする
-      const outputFile = `${safeFileName}.mp3`;
+      // musicフォルダが存在しない場合は作成
+      if (!fs.existsSync('music')) {
+        fs.mkdirSync('music');
+      }
+      
+      const outputFile = `music/${safeFileName}.mp3`;
       console.log('Output file:', outputFile);
       
       processed++;
@@ -77,7 +83,7 @@ const readline = require('readline');
       }
       
       await new Promise((resolve, reject) => {
-        exec(`yt-dlp -x --audio-format mp3 ${timeOptions.join(' ')} -o "${outputFile}" ${videoUrl}`, (error, stdout, stderr) => {
+        exec(`${ytDlpCommand} -x --audio-format mp3 ${timeOptions.join(' ')} -o "${outputFile}" ${videoUrl}`, (error, stdout, stderr) => {
           if (error) {
             reject(new Error(stderr));
           } else {
