@@ -46,8 +46,9 @@ const readline = require('readline');
     try {
       // 動画情報を取得
       const ytDlpCommand = process.platform === 'win32' ? '.\\yt-dlp.exe' : 'yt-dlp';
+      const ytDlpOptions = '--remote-components ejs:github';
       const info = await new Promise((resolve, reject) => {
-        exec(`${ytDlpCommand} ${videoUrl} --dump-json`, (error, stdout, stderr) => {
+        exec(`${ytDlpCommand} ${videoUrl} --dump-json ${ytDlpOptions}`, (error, stdout, stderr) => {
           if (error) {
             reject(new Error(stderr));
           } else {
@@ -72,20 +73,32 @@ const readline = require('readline');
       processed++;
       console.log(`[${processed}/${total}] Downloading: ${info.title}`);
 
-      // yt-dlpで直接MP3としてダウンロード
-      // 時間指定用のオプションを構築
-      const timeOptions = [];
-      if (startTime || endTime) {
-        const start = startTime || '00:00:00';
-        const end = endTime || '';
-        timeOptions.push(`--download-sections *${start}-${end}`);
-        timeOptions.push('--force-keyframes-at-cuts');
-      }
-      
+      // 直接ffmpegでHLSを処理させないため、まずyt-dlpで音声ファイルをローカルにダウンロードしてから
+      // ffmpegでトリミング・MP3変換を行う
+      const downloadTemplate = `music/${safeFileName}.%(ext)s`;
       await new Promise((resolve, reject) => {
-        exec(`${ytDlpCommand} -x --audio-format mp3 ${timeOptions.join(' ')} -o "${outputFile}" ${videoUrl}`, (error, stdout, stderr) => {
+        exec(`${ytDlpCommand} -f bestaudio -o "${downloadTemplate}" ${ytDlpOptions} ${videoUrl}`, (error, stdout, stderr) => {
           if (error) {
-            reject(new Error(stderr));
+            reject(new Error(stderr || error.message));
+          } else {
+            resolve(stdout);
+          }
+        });
+      });
+
+      // ダウンロードした拡張子はinfo.extを使う（存在しない場合はm4aを想定）
+      const downloadedFile = `music/${safeFileName}.${info.ext || 'm4a'}`;
+
+      // ffmpegでトリミング＆MP3変換
+      let ffmpegCmd = 'ffmpeg -y';
+      if (startTime) ffmpegCmd += ` -ss ${startTime}`;
+      if (endTime) ffmpegCmd += ` -to ${endTime}`;
+      ffmpegCmd += ` -i "${downloadedFile}" -c:a libmp3lame -q:a 2 "${outputFile}"`;
+
+      await new Promise((resolve, reject) => {
+        exec(ffmpegCmd, (error, stdout, stderr) => {
+          if (error) {
+            reject(new Error(stderr || stdout || error.message));
           } else {
             resolve(stdout);
           }
