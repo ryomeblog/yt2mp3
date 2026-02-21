@@ -105,6 +105,11 @@ const readline = require('readline');
         });
       });
 
+      // ダウンロードした元ファイル（webm等）がmp3と異なる場合は削除
+      if (downloadedFile !== outputFile && fs.existsSync(downloadedFile)) {
+        fs.unlinkSync(downloadedFile);
+      }
+
       console.log(`Conversion complete! File saved as: ${outputFile}\n`);
       
     } catch (error) {
